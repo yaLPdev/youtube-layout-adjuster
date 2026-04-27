@@ -1,0 +1,4 @@
+/* Optional: keeps flicker minimal before JS runs */
+ytd-reel-shelf-renderer {
+  display: none !important;
+}
