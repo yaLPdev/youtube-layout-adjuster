@@ -3,34 +3,35 @@
 <head>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       padding: 10px;
-      width: 200px;
+      width: 240px;
     }
 
     h3 {
-      margin-top: 0;
+      margin: 10px 0 5px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 3px;
     }
 
     label {
       display: block;
-      margin: 8px 0;
+      margin: 6px 0;
       cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <h3>YouTube Cleaner</h3>
 
-  <label>
-    <input type="checkbox" id="hideLatest">
-    Hide "Latest / Most Relevant"
-  </label>
+  <h2>YouTube Settings</h2>
 
-  <label>
-    <input type="checkbox" id="hideShorts">
-    Hide Shorts
-  </label>
+  <h3>Home</h3>
+  <label><input type="checkbox" id="home-hideLatest"> Hide Latest</label>
+  <label><input type="checkbox" id="home-hideShorts"> Hide Shorts</label>
+
+  <h3>Subscriptions</h3>
+  <label><input type="checkbox" id="subs-hideLatest"> Hide Latest</label>
+  <label><input type="checkbox" id="subs-hideShorts"> Hide Shorts</label>
 
   <script src="popup.js"></script>
 </body>
