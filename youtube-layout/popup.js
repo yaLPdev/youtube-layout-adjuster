@@ -1,39 +1,57 @@
 const defaults = {
-  home: {
-    hideLatest: true,
-    hideShorts: true
-  },
-  subscriptions: {
-    hideLatest: true,
-    hideShorts: true
-  }
+  home: { hideLatest: true, hideShorts: true, hideLive: false },
+  subscriptions: { hideLatest: true, hideShorts: true, hideLive: false }
 };
 
+let currentSettings;
+
+// Load settings
 chrome.storage.sync.get(defaults, (settings) => {
-  // Home
-  document.getElementById("home-hideLatest").checked = settings.home.hideLatest;
-  document.getElementById("home-hideShorts").checked = settings.home.hideShorts;
+  currentSettings = settings;
 
-  // Subs
-  document.getElementById("subs-hideLatest").checked = settings.subscriptions.hideLatest;
-  document.getElementById("subs-hideShorts").checked = settings.subscriptions.hideShorts;
+  set("home-hideLatest", settings.home.hideLatest);
+  set("home-hideShorts", settings.home.hideShorts);
+  set("home-hideLive", settings.home.hideLive);
+
+  set("subs-hideLatest", settings.subscriptions.hideLatest);
+  set("subs-hideShorts", settings.subscriptions.hideShorts);
+  set("subs-hideLive", settings.subscriptions.hideLive);
 });
 
+function set(id, value) {
+  document.getElementById(id).checked = value;
+}
+
+// Listen for toggle changes
 document.querySelectorAll("input").forEach(input => {
-  input.addEventListener("change", save);
+  input.addEventListener("change", saveAndSend);
 });
 
-function save() {
+function saveAndSend() {
   const newSettings = {
     home: {
-      hideLatest: document.getElementById("home-hideLatest").checked,
-      hideShorts: document.getElementById("home-hideShorts").checked
+      hideLatest: get("home-hideLatest"),
+      hideShorts: get("home-hideShorts"),
+      hideLive: get("home-hideLive")
     },
     subscriptions: {
-      hideLatest: document.getElementById("subs-hideLatest").checked,
-      hideShorts: document.getElementById("subs-hideShorts").checked
+      hideLatest: get("subs-hideLatest"),
+      hideShorts: get("subs-hideShorts"),
+      hideLive: get("subs-hideLive")
     }
   };
 
   chrome.storage.sync.set(newSettings);
+
+  // Send live update to active tab
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    chrome.tabs.sendMessage(tabs[0].id, {
+      type: "UPDATE_SETTINGS",
+      settings: newSettings
+    });
+  });
+}
+
+function get(id) {
+  return document.getElementById(id).checked;
 }

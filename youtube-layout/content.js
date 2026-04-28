@@ -1,24 +1,33 @@
 const defaultSettings = {
   home: {
     hideLatest: true,
-    hideShorts: true
+    hideShorts: true,
+    hideLive: false
   },
   subscriptions: {
     hideLatest: true,
-    hideShorts: true
+    hideShorts: true,
+    hideLive: false
   }
 };
 
 let settings = defaultSettings;
 
-// Detect page type
+let timeout;
+
+function debouncedRun() {
+  clearTimeout(timeout);
+  timeout = setTimeout(run, 100); // runs after 100ms pause
+}
+
+// Detect page
 function getPageType() {
   const path = window.location.pathname;
 
   if (path === "/") return "home";
   if (path.startsWith("/feed/subscriptions")) return "subscriptions";
 
-  return "home"; // fallback
+  return "home";
 }
 
 // Load settings
@@ -27,23 +36,30 @@ chrome.storage.sync.get(defaultSettings, (stored) => {
   init();
 });
 
+// Listen for live updates from popup
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === "UPDATE_SETTINGS") {
+    settings = msg.settings;
+    debouncedRun();
+  }
+});
+
 function init() {
   run();
 
-  const observer = new MutationObserver(run);
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+const observer = new MutationObserver(debouncedRun);
+observer.observe(document.body, {
+  childList: true,
+  subtree: true
+});
 
-  // Handle SPA navigation (YouTube doesn’t reload pages)
-  let lastUrl = location.href;
-  new MutationObserver(() => {
-    if (location.href !== lastUrl) {
-      lastUrl = location.href;
-      run();
-    }
-  }).observe(document, { subtree: true, childList: true });
+  // Detect SPA navigation
+new MutationObserver(() => {
+  if (location.href !== lastUrl) {
+    lastUrl = location.href;
+    debouncedRun();
+  }
+}).observe(document, { subtree: true, childList: true });
 }
 
 function run() {
@@ -51,6 +67,7 @@ function run() {
   const pageSettings = settings[page] || {};
 
   removeSections(pageSettings);
+  removeLiveVideos(pageSettings);
 }
 
 function removeSections(pageSettings) {
@@ -70,10 +87,55 @@ function removeSections(pageSettings) {
     if (pageSettings.hideShorts && text.includes("shorts")) {
       section.remove();
     }
+
+    if (pageSettings.hideLive && text.includes("live")) {
+      section.remove();
+    }
   });
 
   if (pageSettings.hideShorts) {
     document.querySelectorAll("ytd-reel-shelf-renderer")
       .forEach(el => el.remove());
   }
+}
+
+function removeLiveVideos(pageSettings) {
+  if (!pageSettings.hideLive) return;
+
+  const videos = document.querySelectorAll(
+    "ytd-rich-item-renderer, ytd-video-renderer, ytd-grid-video-renderer"
+  );
+
+  videos.forEach(video => {
+    // 1. Badge check (most reliable)
+    const badge = video.querySelector(
+      "ytd-badge-supported-renderer, .badge-style-type-live-now"
+    );
+
+    // 2. Thumbnail overlay (LIVE indicator)
+    const overlay = video.querySelector(
+      "ytd-thumbnail-overlay-time-status-renderer"
+    );
+
+    // 3. Accessibility label (very reliable fallback)
+    const aria = video.querySelector("[aria-label]");
+
+    let isLive = false;
+
+    if (badge && badge.innerText.toLowerCase().includes("live")) {
+      isLive = true;
+    }
+
+    if (overlay && overlay.innerText.toLowerCase().includes("live")) {
+      isLive = true;
+    }
+
+    if (aria && aria.getAttribute("aria-label").toLowerCase().includes("live")) {
+      isLive = true;
+    }
+
+    if (isLive) {
+      video.remove();
+    }
+  });
 }

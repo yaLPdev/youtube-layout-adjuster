@@ -1,4 +1,10 @@
-/* Optional: keeps flicker minimal before JS runs */
+/* Reduce flicker before JS runs */
 ytd-reel-shelf-renderer {
+  display: none !important;
+}
+
+/* Hide LIVE badges + overlays */
+.badge-style-type-live-now,
+ytd-thumbnail-overlay-time-status-renderer[overlay-style="LIVE"] {
   display: none !important;
 }
