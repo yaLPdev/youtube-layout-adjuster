@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Layout Adjuster for Brave",
-  "version": "1.4",
+  "version": "1.4.1",
   "description": "Hide unwanted YouTube sections",
   "permissions": ["storage"],
   "content_scripts": [

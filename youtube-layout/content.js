@@ -13,11 +13,22 @@ const defaultSettings = {
 
 let settings = defaultSettings;
 
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync") {
+    // Merge updated values into settings
+    for (let key in changes) {
+      settings[key] = changes[key].newValue;
+    }
+
+    debouncedRun(); // re-apply filters instantly
+  }
+});
+
 let timeout;
 
 function debouncedRun() {
   clearTimeout(timeout);
-  timeout = setTimeout(run, 100); // runs after 100ms pause
+  timeout = setTimeout(run, 50); // runs after 50ms pause
 }
 
 // Detect page

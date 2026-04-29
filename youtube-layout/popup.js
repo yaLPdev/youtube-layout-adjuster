@@ -42,14 +42,6 @@ function saveAndSend() {
   };
 
   chrome.storage.sync.set(newSettings);
-
-  // Send live update to active tab
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    chrome.tabs.sendMessage(tabs[0].id, {
-      type: "UPDATE_SETTINGS",
-      settings: newSettings
-    });
-  });
 }
 
 function get(id) {
