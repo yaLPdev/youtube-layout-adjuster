@@ -77,11 +77,11 @@ function run() {
   const page = getPageType();
   const pageSettings = settings[page] || {};
 
-  removeSections(pageSettings);
-  removeLiveVideos(pageSettings);
+  updateSections(pageSettings);
+  updateLiveVideos(pageSettings);
 }
 
-function removeSections(pageSettings) {
+function updateSections(pageSettings) {
   const sections = document.querySelectorAll("ytd-rich-section-renderer");
 
   sections.forEach(section => {
@@ -90,48 +90,47 @@ function removeSections(pageSettings) {
 
     const text = header.innerText.trim().toLowerCase();
 
+    let shouldHide = false;
+
     if (pageSettings.hideLatest &&
         (text.includes("latest") || text.includes("most relevant"))) {
-      section.remove();
+      shouldHide = true;
     }
 
     if (pageSettings.hideShorts && text.includes("shorts")) {
-      section.remove();
+      shouldHide = true;
     }
 
     if (pageSettings.hideLive && text.includes("live")) {
-      section.remove();
+      shouldHide = true;
     }
+
+    section.classList.toggle("ytc-hidden", shouldHide);
   });
 
-  if (pageSettings.hideShorts) {
-    document.querySelectorAll("ytd-reel-shelf-renderer")
-      .forEach(el => el.remove());
-  }
+  // Shorts shelf fallback
+  document.querySelectorAll("ytd-reel-shelf-renderer").forEach(el => {
+    el.classList.toggle("ytc-hidden", pageSettings.hideShorts);
+  });
 }
 
-function removeLiveVideos(pageSettings) {
-  if (!pageSettings.hideLive) return;
-
+function updateLiveVideos(pageSettings) {
   const videos = document.querySelectorAll(
     "ytd-rich-item-renderer, ytd-video-renderer, ytd-grid-video-renderer"
   );
 
   videos.forEach(video => {
-    // 1. Badge check (most reliable)
+    let isLive = false;
+
     const badge = video.querySelector(
       "ytd-badge-supported-renderer, .badge-style-type-live-now"
     );
 
-    // 2. Thumbnail overlay (LIVE indicator)
     const overlay = video.querySelector(
       "ytd-thumbnail-overlay-time-status-renderer"
     );
 
-    // 3. Accessibility label (very reliable fallback)
     const aria = video.querySelector("[aria-label]");
-
-    let isLive = false;
 
     if (badge && badge.innerText.toLowerCase().includes("live")) {
       isLive = true;
@@ -145,8 +144,8 @@ function removeLiveVideos(pageSettings) {
       isLive = true;
     }
 
-    if (isLive) {
-      video.remove();
-    }
+    const shouldHide = pageSettings.hideLive && isLive;
+
+    video.classList.toggle("ytc-hidden", shouldHide);
   });
 }

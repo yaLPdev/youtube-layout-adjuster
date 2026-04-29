@@ -8,3 +8,7 @@ ytd-reel-shelf-renderer {
 ytd-thumbnail-overlay-time-status-renderer[overlay-style="LIVE"] {
   display: none !important;
 }
+
+.ytc-hidden {
+  display: none !important;
+}
